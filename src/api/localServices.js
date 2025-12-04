@@ -60,15 +60,15 @@ export async function uploadFromUrl(imageUrl) {
   }
 
   const data = await response.json();
-  
+
   // Retourner l'URL en WebP (Cloudinary convertit automatiquement)
   const webpUrl = data.secure_url.replace(/\.[^.]+$/, '.webp');
   const thumbnailUrl = data.secure_url.replace('/upload/', '/upload/w_200,h_200,c_fill,f_webp/');
-  
-  return { 
-    imageUrl: webpUrl, 
+
+  return {
+    imageUrl: webpUrl,
     thumbnailUrl,
-    public_id: data.public_id 
+    public_id: data.public_id
   };
 }
 
@@ -111,14 +111,15 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 // Génération d'image avec Replicate via API serverless (avec polling)
 export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, userDetails, onProgress }) {
   let prompt = `A photorealistic sofa with the exact fabric pattern and texture from the reference image applied seamlessly to its upholstery. The sofa should maintain its original shape and lighting while the fabric covers all cushions and surfaces naturally. High quality, professional furniture photography.`;
-  
+
   // Ajouter les détails utilisateur au prompt si fournis
   if (userDetails && userDetails.trim()) {
     prompt += ` Additional details: ${userDetails.trim()}.`;
   }
 
   // 1. Lancer la génération
-  const startResponse = await fetch('/api/replicate', {
+  //const startResponse = await fetch('/api/replicate', {
+  const startResponse = await fetch('http://localhost:3000/api/replicate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sofaImageUrl, fabricImageUrl, prompt }),
@@ -145,7 +146,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
       onProgress(`🎨 Génération en cours... (${(i + 1) * 5}s)`);
     }
 
-    const pollResponse = await fetch('/api/replicate', {
+    //const pollResponse = await fetch('/api/replicate', {
+    const pollResponse = await fetch('http://localhost:3000/api/replicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ predictionId }),
