@@ -4,6 +4,16 @@
 const CLOUDINARY_CLOUD_NAME = 'dktuiscor';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
 
+// Convertir un fichier en Data URL (base64)
+export async function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Erreur lecture fichier'));
+    reader.readAsDataURL(file);
+  });
+}
+
 // Upload d'image vers Cloudinary (unsigned upload)
 export async function uploadFile(file) {
   const formData = new FormData();
