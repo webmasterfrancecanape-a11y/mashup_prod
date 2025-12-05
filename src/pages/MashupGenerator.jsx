@@ -201,7 +201,7 @@ export default function MashupGenerator() {
         <div className="text-center mb-8 md:mb-12">
 
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">
-            <img src="https://www.francecanape.com/wp-content/uploads/2022/10/logo-black-min.svg" style={{ width: "300px" }} />
+            <img src="https://www.francecanape.com/wp-content/uploads/2022/10/logo-black-min.svg" style={{ width: "300px", margin: "2rem auto" }} />
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Visualisez instantanément votre canapé avec le tissu de votre choix
