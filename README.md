@@ -62,3 +62,4 @@ URL : Configurée dans Vercel
 ### Variables d'environnement
 Créer un fichier .env.local (dev local) :
 REPLICATE_API_TOKEN=votre_token_replicate
+# Test build auto
