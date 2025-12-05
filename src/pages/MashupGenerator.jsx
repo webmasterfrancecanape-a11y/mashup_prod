@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { fileToDataUrl, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices";import { Button } from "@/components/ui/button";
+import { fileToDataUrl, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices"; import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,7 +20,7 @@ export default function MashupGenerator() {
   const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
 
   const tissuCameraRef = useRef(null);
-  
+
   // Charger l'historique au démarrage
   useEffect(() => {
     setHistory(getHistory());
@@ -74,7 +74,7 @@ export default function MashupGenerator() {
   const handleDrop = (e, type) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (type === 'tissu') {
       setDragOverTissu(false);
     } else {
@@ -105,14 +105,14 @@ export default function MashupGenerator() {
 
 
 
-      setGenerationProgress("🎨 Génération avec Nano-Banana-Pro...");
- 
+    setGenerationProgress("🎨 Génération avec Nano-Banana-Pro...");
+
 
     try {
       // Convertir les fichiers en Data URLs (sans upload Cloudinary)
       const canapeUrl = await fileToDataUrl(canapeImage);
       const tissuUrl = await fileToDataUrl(tissuImage);
-      
+
 
       // Appel à Replicate via notre API avec polling
       const result = await generateSofaWithFabric({
@@ -133,7 +133,7 @@ export default function MashupGenerator() {
       try {
         const cloudinaryResult = await uploadFromUrl(result.imageUrl);
         setCloudinaryUrl(cloudinaryResult.imageUrl);
-        
+
         const newHistory = addToHistory({
           imageUrl: cloudinaryResult.imageUrl,
           thumbnailUrl: cloudinaryResult.thumbnailUrl,
@@ -146,7 +146,7 @@ export default function MashupGenerator() {
       }
 
       setGenerationProgress("✅ Terminé !");
-      
+
     } catch (err) {
       console.error("Erreur:", err);
       setError(err.message || "Erreur lors de la génération. Vérifiez que les fonctions backend sont activées dans Dashboard > Settings.");
@@ -158,7 +158,7 @@ export default function MashupGenerator() {
   const handleDownload = async (imageUrl = null) => {
     const urlToDownload = imageUrl || cloudinaryUrl || generatedImage;
     if (!urlToDownload) return;
-    
+
     try {
       const response = await fetch(urlToDownload);
       const blob = await response.blob();
@@ -199,11 +199,9 @@ export default function MashupGenerator() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 md:mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-4 shadow-lg">
-            <Sparkles className="w-8 h-8 text-white" />
-          </div>
+
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">
-            France Canapé
+            <img src="https://www.francecanape.com/wp-content/uploads/2022/10/logo-black-min.svg" style={{ width: "300px" }} />
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Visualisez instantanément votre canapé avec le tissu de votre choix
@@ -215,10 +213,9 @@ export default function MashupGenerator() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <Card 
-            className={`border-2 bg-white/80 backdrop-blur shadow-xl hover:shadow-2xl transition-all duration-300 ${
-              dragOverTissu ? 'border-blue-500 bg-blue-50 scale-105' : 'border-blue-200'
-            }`}
+          <Card
+            className={`border-2 bg-white/80 backdrop-blur shadow-xl hover:shadow-2xl transition-all duration-300 ${dragOverTissu ? 'border-blue-500 bg-blue-50 scale-105' : 'border-blue-200'
+              }`}
             onDragEnter={(e) => handleDragEnter(e, 'tissu')}
             onDragLeave={(e) => handleDragLeave(e, 'tissu')}
             onDragOver={handleDragOver}
@@ -242,11 +239,10 @@ export default function MashupGenerator() {
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-200 rounded-xl" />
                 </div>
               ) : (
-                <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${
-                  dragOverTissu 
-                    ? 'border-blue-500 bg-blue-100 scale-105' 
+                <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${dragOverTissu
+                    ? 'border-blue-500 bg-blue-100 scale-105'
                     : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-300'
-                }`}>
+                  }`}>
                   <div className="text-center">
                     <Upload className={`w-12 h-12 mx-auto mb-2 ${dragOverTissu ? 'text-blue-600' : 'text-blue-400'}`} />
                     <p className="text-sm text-gray-500">
@@ -295,10 +291,9 @@ export default function MashupGenerator() {
             </CardContent>
           </Card>
 
-          <Card 
-            className={`border-2 bg-white/80 backdrop-blur shadow-xl hover:shadow-2xl transition-all duration-300 ${
-              dragOverCanape ? 'border-indigo-500 bg-indigo-50 scale-105' : 'border-indigo-200'
-            }`}
+          <Card
+            className={`border-2 bg-white/80 backdrop-blur shadow-xl hover:shadow-2xl transition-all duration-300 ${dragOverCanape ? 'border-indigo-500 bg-indigo-50 scale-105' : 'border-indigo-200'
+              }`}
             onDragEnter={(e) => handleDragEnter(e, 'canape')}
             onDragLeave={(e) => handleDragLeave(e, 'canape')}
             onDragOver={handleDragOver}
@@ -322,11 +317,10 @@ export default function MashupGenerator() {
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-200 rounded-xl" />
                 </div>
               ) : (
-                <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${
-                  dragOverCanape 
-                    ? 'border-indigo-500 bg-indigo-100 scale-105' 
+                <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${dragOverCanape
+                    ? 'border-indigo-500 bg-indigo-100 scale-105'
                     : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-300'
-                }`}>
+                  }`}>
                   <div className="text-center">
                     <Upload className={`w-12 h-12 mx-auto mb-2 ${dragOverCanape ? 'text-indigo-600' : 'text-indigo-400'}`} />
                     <p className="text-sm text-gray-500">
@@ -497,7 +491,7 @@ export default function MashupGenerator() {
                       className="w-full aspect-square object-cover rounded-lg shadow-md group-hover:shadow-xl transition-all duration-200 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                      <Download 
+                      <Download
                         className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();

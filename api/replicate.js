@@ -13,6 +13,8 @@ export default async function handler(req, res) {
   }
 
   const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dq6fmczeb';
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'ml_defaulte';
 
   try {
     const { sofaImageUrl, fabricImageUrl, prompt, predictionId } = req.body;
