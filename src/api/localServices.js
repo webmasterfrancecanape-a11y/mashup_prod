@@ -1,7 +1,7 @@
 // Services locaux pour remplacer Base44
 // Cloudinary pour l'upload, API serverless pour Replicate
 
-const CLOUDINARY_CLOUD_NAME = 'dktuiscor';
+const CLOUDINARY_CLOUD_NAME = 'dq6fmczeb';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
 
 // Convertir un fichier en Data URL (base64)
