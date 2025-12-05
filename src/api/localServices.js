@@ -118,8 +118,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
   }
 
   // 1. Lancer la génération
-  //const startResponse = await fetch('/api/replicate', {
-  const startResponse = await fetch('http://localhost:3000/api/replicate', {
+  const startResponse = await fetch('/api/replicate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sofaImageUrl, fabricImageUrl, prompt }),
@@ -146,8 +145,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
       onProgress(`🎨 Génération en cours... (${(i + 1) * 5}s)`);
     }
 
-    //const pollResponse = await fetch('/api/replicate', {
-    const pollResponse = await fetch('http://localhost:3000/api/replicate', {
+    const pollResponse = await fetch('/api/replicate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ predictionId }),
