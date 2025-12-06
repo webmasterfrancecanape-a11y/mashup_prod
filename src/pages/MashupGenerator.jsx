@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { fileToDataUrl, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices"; import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2 } from "lucide-react";
+import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function MashupGenerator() {
@@ -199,16 +199,24 @@ export default function MashupGenerator() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 md:mb-12">
-
           <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-3">
             <img src="https://www.francecanape.com/wp-content/uploads/2022/10/logo-black-min.svg" style={{ width: "300px", margin: "2rem auto" }} />
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Visualisez instantanément votre canapé avec le tissu de votre choix
           </p>
-          <div className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-            Propulsé par Nano-Banana-Pro AI
+          <div className="mt-2 inline-flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+              Propulsé par Nano-Banana-Pro AI
+            </div>
+            <button
+              onClick={handleReset}
+              className="p-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-full transition-all duration-200 shadow-md hover:shadow-lg"
+              title="Tout réinitialiser"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -237,6 +245,16 @@ export default function MashupGenerator() {
                     className="w-full h-64 object-cover rounded-xl shadow-lg"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-200 rounded-xl" />
+                  <button
+                    onClick={() => {
+                      setTissuImage(null);
+                      setTissuPreview(null);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    title="Supprimer le tissu"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               ) : (
                 <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${dragOverTissu
@@ -315,6 +333,16 @@ export default function MashupGenerator() {
                     className="w-full h-64 object-cover rounded-xl shadow-lg"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-200 rounded-xl" />
+                  <button
+                    onClick={() => {
+                      setCanapeImage(null);
+                      setCanapePreview(null);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    title="Supprimer le canapé"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
               ) : (
                 <div className={`mb-6 h-64 rounded-xl border-2 border-dashed flex items-center justify-center transition-all duration-200 ${dragOverCanape
