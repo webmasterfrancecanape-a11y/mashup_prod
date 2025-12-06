@@ -4,13 +4,81 @@
 const CLOUDINARY_CLOUD_NAME = 'dq6fmczeb';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
 
-// Convertir un fichier en Data URL (base64)
-export async function fileToDataUrl(file) {
+// Compresser une image avant envoi à Replicate
+export async function compressImage(file, maxWidth = 1920, maxHeight = 1920, quality = 0.85) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    
+    reader.onload = (e) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculer les nouvelles dimensions en gardant le ratio
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+        
+        // Créer un canvas pour redimensionner
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convertir en Data URL compressé (JPEG pour réduire la taille)
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(compressedDataUrl);
+      };
+      
+      img.onerror = () => reject(new Error('Erreur chargement image'));
+      img.src = e.target.result;
+    };
+    
     reader.onerror = () => reject(new Error('Erreur lecture fichier'));
     reader.readAsDataURL(file);
+  });
+}
+
+// Convertir un fichier en Data URL (base64) avec compression automatique
+export async function fileToDataUrl(file) {
+  // Compresser l'image à 1920px max pour éviter les images trop lourdes
+  return compressImage(file, 1920, 1920, 0.85);
+}
+
+// Convertir une Data URL en base64 avec recompression plus agressive
+async function recompressDataUrl(dataUrl, maxWidth, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth || height > maxWidth) {
+        const ratio = maxWidth / Math.max(width, height);
+        width = Math.floor(width * ratio);
+        height = Math.floor(height * ratio);
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(compressedDataUrl);
+    };
+    
+    img.onerror = () => reject(new Error('Erreur recompression'));
+    img.src = dataUrl;
   });
 }
 
@@ -27,8 +95,6 @@ export async function uploadFile(file) {
       body: formData,
     }
   );
-
-
 
   if (!response.ok) {
     const error = await response.json();
@@ -117,54 +183,101 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
     prompt += ` Additional details: ${userDetails.trim()}.`;
   }
 
-  // 1. Lancer la génération
-  const startResponse = await fetch('/api/replicate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sofaImageUrl, fabricImageUrl, prompt }),
-  });
+  // Variables pour la recompression progressive
+  let currentSofaUrl = sofaImageUrl;
+  let currentFabricUrl = fabricImageUrl;
+  let attempt = 0;
+  const maxRetries = 2;
+  
+  // Configurations de compression progressive (taille max, qualité)
+  const compressionLevels = [
+    { maxWidth: 1920, quality: 0.85 }, // Déjà appliqué
+    { maxWidth: 1280, quality: 0.70 }, // Compression moyenne
+    { maxWidth: 1024, quality: 0.60 }, // Compression agressive
+  ];
 
-  if (!startResponse.ok) {
-    const error = await startResponse.json();
-    throw new Error(error.message || 'Erreur lancement génération');
-  }
+  while (attempt <= maxRetries) {
+    try {
+      // 1. Lancer la génération
+      const startResponse = await fetch('/api/replicate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sofaImageUrl: currentSofaUrl, fabricImageUrl: currentFabricUrl, prompt }),
+      });
 
-  const startData = await startResponse.json();
-  const predictionId = startData.predictionId;
+      // Gestion de l'erreur 413 (Request Entity Too Large)
+      if (startResponse.status === 413) {
+        attempt++;
+        
+        if (attempt > maxRetries) {
+          throw new Error('Les images sont trop volumineuses même après compression maximale. Veuillez utiliser des images plus petites.');
+        }
 
-  if (!predictionId) {
-    throw new Error('Pas de predictionId reçu');
-  }
+        const level = compressionLevels[attempt];
+        
+        if (onProgress) {
+          onProgress(`⚠️ Images trop volumineuses, compression niveau ${attempt}/${maxRetries}...`);
+        }
 
-  // 2. Polling jusqu'à ce que ce soit fini (max 3 minutes)
-  const maxAttempts = 36; // 36 x 5 secondes = 3 minutes
-  for (let i = 0; i < maxAttempts; i++) {
-    await sleep(5000); // Attendre 5 secondes entre chaque check
+        // Recompresser les deux images avec des paramètres plus agressifs
+        currentSofaUrl = await recompressDataUrl(sofaImageUrl, level.maxWidth, level.quality);
+        currentFabricUrl = await recompressDataUrl(fabricImageUrl, level.maxWidth, level.quality);
+        
+        // Attendre un peu avant de réessayer
+        await sleep(1000);
+        continue; // Réessayer avec les images recompressées
+      }
 
-    if (onProgress) {
-      onProgress(`🎨 Génération en cours... (${(i + 1) * 5}s)`);
+      if (!startResponse.ok) {
+        const error = await startResponse.json().catch(() => ({}));
+        throw new Error(error.message || 'Erreur lancement génération');
+      }
+
+      const startData = await startResponse.json();
+      const predictionId = startData.predictionId;
+
+      if (!predictionId) {
+        throw new Error('Pas de predictionId reçu');
+      }
+
+      // 2. Polling jusqu'à ce que ce soit fini (max 3 minutes)
+      const maxAttempts = 36; // 36 x 5 secondes = 3 minutes
+      for (let i = 0; i < maxAttempts; i++) {
+        await sleep(5000); // Attendre 5 secondes entre chaque check
+
+        if (onProgress) {
+          onProgress(`🎨 Génération en cours... (${(i + 1) * 5}s)`);
+        }
+
+        const pollResponse = await fetch('/api/replicate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ predictionId }),
+        });
+
+        if (!pollResponse.ok) {
+          const error = await pollResponse.json().catch(() => ({}));
+          throw new Error(error.message || 'Erreur polling');
+        }
+
+        const pollData = await pollResponse.json();
+
+        if (pollData.status === 'succeeded') {
+          return { status: 'success', imageUrl: pollData.imageUrl };
+        } else if (pollData.status === 'failed') {
+          throw new Error(pollData.message || 'La génération a échoué');
+        }
+        // Sinon continue le polling (starting, processing)
+      }
+
+      throw new Error('Timeout: la génération a pris trop de temps');
+      
+    } catch (error) {
+      // Si ce n'est pas une erreur 413, on la propage directement
+      if (error.message && !error.message.includes('volumineuses')) {
+        throw error;
+      }
+      // Sinon on continue la boucle pour réessayer
     }
-
-    const pollResponse = await fetch('/api/replicate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ predictionId }),
-    });
-
-    if (!pollResponse.ok) {
-      const error = await pollResponse.json();
-      throw new Error(error.message || 'Erreur polling');
-    }
-
-    const pollData = await pollResponse.json();
-
-    if (pollData.status === 'succeeded') {
-      return { status: 'success', imageUrl: pollData.imageUrl };
-    } else if (pollData.status === 'failed') {
-      throw new Error(pollData.message || 'La génération a échoué');
-    }
-    // Sinon continue le polling (starting, processing)
   }
-
-  throw new Error('Timeout: la génération a pris trop de temps');
 }
