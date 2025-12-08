@@ -162,14 +162,52 @@ export default function MashupGenerator() {
     try {
       const response = await fetch(urlToDownload);
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `canape-mashup-${Date.now()}.webp`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Créer une image pour obtenir les dimensions
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      img.onload = () => {
+        // Créer un canvas avec les dimensions de l'image
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        // Dessiner l'image originale
+        ctx.drawImage(img, 0, 0);
+        
+        // Ajouter le bandeau disclaimer en bas
+        const bannerHeight = Math.max(40, img.height * 0.05);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, img.height - bannerHeight, img.width, bannerHeight);
+        
+        // Ajouter le texte
+        const fontSize = Math.max(14, img.width * 0.018);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `${fontSize}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          '⚠️ Aperçu indicatif généré par IA — Les couleurs et textures réelles peuvent varier',
+          img.width / 2,
+          img.height - bannerHeight / 2
+        );
+        
+        // Télécharger l'image avec le bandeau
+        canvas.toBlob((newBlob) => {
+          const url = window.URL.createObjectURL(newBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `canape-mashup-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 'image/png');
+      };
+      
+      img.src = URL.createObjectURL(blob);
     } catch (err) {
       console.error("Erreur de téléchargement:", err);
     }
