@@ -476,13 +476,19 @@ export default function MashupGenerator() {
                 </div>
               </div>
 
-              <div className="relative group">
+              <div className="relative group overflow-hidden rounded-xl">
                 <img
                   src={generatedImage}
                   alt="Mashup généré"
-                  className="w-full rounded-xl shadow-2xl"
+                  className="w-full shadow-2xl"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                {/* Bandeau disclaimer */}
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm px-4 py-2">
+                  <p className="text-white/90 text-xs text-center">
+                    ⚠️ Aperçu indicatif généré par IA — Les couleurs et textures réelles peuvent varier
+                  </p>
+                </div>
               </div>
 
               <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
