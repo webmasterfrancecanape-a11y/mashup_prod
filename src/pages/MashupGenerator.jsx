@@ -3,6 +3,7 @@ import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHis
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import heic2any from "heic2any";
 
 export default function MashupGenerator() {
   const [tissuImage, setTissuImage] = useState(null);
@@ -29,21 +30,47 @@ export default function MashupGenerator() {
   const canapeCameraRef = useRef(null);
   const canapeGalleryRef = useRef(null);
 
-  const handleFileSelect = (file, type) => {
+  const handleFileSelect = async (file, type) => {
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (type === 'tissu') {
-        setTissuImage(file);
-        setTissuPreview(reader.result);
-      } else {
-        setCanapeImage(file);
-        setCanapePreview(reader.result);
+    try {
+      let processedFile = file;
+      
+      // Convertir HEIC/HEIF en JPEG si nécessaire
+      if (file.type === 'image/heic' || file.type === 'image/heif' || 
+          file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+        setGenerationProgress(`🔄 Conversion ${file.name} en JPEG...`);
+        const convertedBlob = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.9
+        });
+        // heic2any peut retourner un array si multiple pages
+        const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+        processedFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'), {
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
+        setGenerationProgress('');
       }
-      setError(null);
-    };
-    reader.readAsDataURL(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (type === 'tissu') {
+          setTissuImage(processedFile);
+          setTissuPreview(reader.result);
+        } else {
+          setCanapeImage(processedFile);
+          setCanapePreview(reader.result);
+        }
+        setError(null);
+      };
+      reader.readAsDataURL(processedFile);
+    } catch (err) {
+      console.error('Erreur traitement image:', err);
+      setError(`Erreur lors du traitement de l'image : ${err.message}`);
+      setGenerationProgress('');
+    }
   };
 
   const handleDragEnter = (e, type) => {
@@ -328,7 +355,7 @@ export default function MashupGenerator() {
                 <input
                   ref={tissuCameraRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   capture="environment"
                   onChange={(e) => handleFileSelect(e.target.files[0], 'tissu')}
                   className="hidden"
@@ -345,7 +372,7 @@ export default function MashupGenerator() {
                 <input
                   ref={tissuGalleryRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   onChange={(e) => handleFileSelect(e.target.files[0], 'tissu')}
                   className="hidden"
                 />
@@ -416,7 +443,7 @@ export default function MashupGenerator() {
                 <input
                   ref={canapeCameraRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   capture="environment"
                   onChange={(e) => handleFileSelect(e.target.files[0], 'canape')}
                   className="hidden"
@@ -433,7 +460,7 @@ export default function MashupGenerator() {
                 <input
                   ref={canapeGalleryRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.heic,.heif"
                   onChange={(e) => handleFileSelect(e.target.files[0], 'canape')}
                   className="hidden"
                 />
