@@ -16,6 +16,11 @@ export default async function handler(req, res) {
   const apiKey = process.env.CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
+  console.log('[DELETE] Attempting to delete:', public_id);
+  console.log('[DELETE] Cloud name:', cloudName);
+  console.log('[DELETE] API Key exists:', !!apiKey);
+  console.log('[DELETE] API Secret exists:', !!apiSecret);
+
   if (!apiKey || !apiSecret) {
     console.error('Missing Cloudinary API credentials');
     return res.status(500).json({ 
@@ -54,15 +59,24 @@ export default async function handler(req, res) {
     );
 
     const result = await response.json();
+    console.log('[DELETE] Cloudinary response:', result);
 
     if (result.result === 'ok') {
+      console.log('[DELETE] ✅ Successfully deleted:', public_id);
       return res.status(200).json({ 
         success: true, 
         message: 'Image deleted successfully',
         public_id 
       });
+    } else if (result.result === 'not found') {
+      console.log('[DELETE] ⚠️ Image not found (may already be deleted):', public_id);
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Image not found (already deleted)',
+        public_id 
+      });
     } else {
-      console.error('Cloudinary deletion failed:', result);
+      console.error('[DELETE] ❌ Deletion failed:', result);
       return res.status(400).json({ 
         success: false, 
         error: 'Deletion failed', 

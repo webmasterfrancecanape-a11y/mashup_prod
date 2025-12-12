@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices"; import { Button } from "@/components/ui/button";
+import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory, deleteCloudinaryImage } from "@/api/localServices"; import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -141,6 +141,20 @@ export default function MashupGenerator() {
           userDetails: userDetails,
         });
         setHistory(newHistory);
+        
+        // Supprimer les images sources temporaires de Cloudinary
+        setGenerationProgress("🗑️ Nettoyage des images temporaires...");
+        try {
+          const deleteResults = await Promise.all([
+            deleteCloudinaryImage(canapeUpload.public_id),
+            deleteCloudinaryImage(tissuUpload.public_id)
+          ]);
+          console.log('Résultats suppression:', deleteResults);
+        } catch (deleteErr) {
+          console.error("⚠️ Erreur suppression images temporaires:", deleteErr);
+          // Non bloquant, on continue
+        }
+        
       } catch (uploadErr) {
         console.error("Erreur sauvegarde Cloudinary:", uploadErr);
         // On continue quand même, l'image est affichée

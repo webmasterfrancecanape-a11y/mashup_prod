@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   try {
     const { sofaImageUrl, fabricImageUrl, prompt, predictionId } = req.body;
 
-    // Si on a un predictionId, on vérifie le statut (polling)
+    // Si on a un predictionId, on vérifie le statut (polling)git
     if (predictionId) {
       const statusResponse = await fetch(
         `https://api.replicate.com/v1/predictions/${predictionId}`,
@@ -53,10 +53,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           input: {
             prompt: prompt,
-            resolution: '2K',
+            resolution: '1K',
             image_input: [sofaImageUrl, fabricImageUrl],
             aspect_ratio: '4:3',
-            output_format: 'png',
+            output_format: 'jpg',
             safety_filter_level: 'block_only_high',
           },
         }),
