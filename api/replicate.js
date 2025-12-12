@@ -57,8 +57,8 @@ export default async function handler(req, res) {
             image_input: [sofaImageUrl, fabricImageUrl],
             aspect_ratio: '4:3',
             output_format: 'jpg',
-            output_quality: 85,
-            safety_filter_level: 'block_only_high',
+            output_quality: 80,
+            safety_filter_level: 'none',
           },
         }),
       }

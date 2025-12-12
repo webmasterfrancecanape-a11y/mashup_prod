@@ -5,7 +5,7 @@ const CLOUDINARY_CLOUD_NAME = 'dq6fmczeb';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_defaulte';
 
 // Compresser une image avant envoi à Replicate
-export async function compressImage(file, maxWidth = 1920, maxHeight = 1920, quality = 0.85) {
+export async function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.85) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     
@@ -219,9 +219,9 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
   
   // Configurations de compression progressive (taille max, qualité)
   const compressionLevels = [
-    { maxWidth: 1920, quality: 0.85 }, // Déjà appliqué
-    { maxWidth: 1280, quality: 0.70 }, // Compression moyenne
-    { maxWidth: 1024, quality: 0.60 }, // Compression agressive
+    { maxWidth: 1280, quality: 0.80 }, // Déjà appliqué
+    { maxWidth: 1024, quality: 0.70 }, // Compression moyenne
+    { maxWidth: 800, quality: 0.60 }, // Compression agressive
   ];
 
   while (attempt <= maxRetries) {
