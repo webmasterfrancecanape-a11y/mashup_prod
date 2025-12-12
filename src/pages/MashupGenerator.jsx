@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { fileToDataUrl, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices"; import { Button } from "@/components/ui/button";
+import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory } from "@/api/localServices"; import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -102,16 +102,17 @@ export default function MashupGenerator() {
     setError(null);
     setGeneratedImage(null);
 
-
-
-
-    setGenerationProgress("🎨 Génération avec Nano-Banana-Pro...");
-
+    setGenerationProgress("📤 Upload temporaire des images...");
 
     try {
-      // Convertir les fichiers en Data URLs (sans upload Cloudinary)
-      const canapeUrl = await fileToDataUrl(canapeImage);
-      const tissuUrl = await fileToDataUrl(tissuImage);
+      // Upload temporaire sur Cloudinary (URLs publiques requises par Replicate)
+      const canapeUpload = await uploadFile(canapeImage);
+      const canapeUrl = canapeUpload.file_url;
+      
+      const tissuUpload = await uploadFile(tissuImage);
+      const tissuUrl = tissuUpload.file_url;
+
+      setGenerationProgress("🎨 Génération avec Nano-Banana-Pro...");
 
 
       // Appel à Replicate via notre API avec polling
