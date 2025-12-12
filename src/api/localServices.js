@@ -105,6 +105,34 @@ export async function uploadFile(file) {
   return { file_url: data.secure_url, public_id: data.public_id };
 }
 
+// Supprimer une image de Cloudinary par public_id
+export async function deleteCloudinaryImage(publicId) {
+  try {
+    console.log('🗑️ Suppression de l\'image temporaire:', publicId);
+    
+    const response = await fetch('/api/cloudinary-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ public_id: publicId }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      console.log('✅ Image supprimée avec succès:', publicId);
+      return true;
+    } else {
+      console.error('❌ Échec de la suppression:', result.error);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de la suppression:', error);
+    return false;
+  }
+}
+
 // Upload d'une image depuis URL vers Cloudinary (pour sauvegarder les résultats)
 export async function uploadFromUrl(imageUrl) {
   const formData = new FormData();
