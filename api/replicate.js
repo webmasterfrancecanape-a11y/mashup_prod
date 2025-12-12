@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           input: {
             prompt: prompt,
-            resolution: '768',
+            resolution: '1K',
             image_input: [sofaImageUrl, fabricImageUrl],
             aspect_ratio: '4:3',
             output_format: 'jpg',
