@@ -268,13 +268,16 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
         throw new Error('Pas de predictionId reçu');
       }
 
-      // 2. Polling jusqu'à ce que ce soit fini (max 3 minutes)
-      const maxAttempts = 36; // 36 x 5 secondes = 3 minutes
+      // 2. Polling adaptatif : rapide au début, puis ralentit
+      const maxAttempts = 60; // 60 tentatives max
       for (let i = 0; i < maxAttempts; i++) {
-        await sleep(5000); // Attendre 5 secondes entre chaque check
+        // Polling adaptatif : 1s les 10 premières tentatives, puis 2s
+        const pollInterval = i < 10 ? 1000 : 2000;
+        await sleep(pollInterval);
 
+        const elapsedSeconds = i < 10 ? i + 1 : 10 + (i - 9) * 2;
         if (onProgress) {
-          onProgress(`🎨 Génération en cours... (${(i + 1) * 5}s)`);
+          onProgress(`🎨 Génération en cours... (${elapsedSeconds}s)`);
         }
 
         const pollResponse = await fetch('/api/replicate', {
