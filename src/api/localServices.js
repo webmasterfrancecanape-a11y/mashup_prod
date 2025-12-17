@@ -361,9 +361,12 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
             
             // Si on utilise encore le modèle par défaut, essayer avec flux-schnell
             if (currentModel === 'google/nano-banana-pro') {
+              console.log('🔄 Basculement automatique vers flux-schnell');
               if (onProgress) {
-                onProgress('⚠️ Modèle surchargé. Tentative avec modèle alternatif...');
+                onProgress('⚠️ Modèle surchargé. Basculement automatique vers modèle rapide...');
               }
+              // Attendre 2 secondes avant de relancer
+              await sleep(2000);
               return await generateSofaWithFabric({
                 sofaImageUrl: currentSofaUrl,
                 fabricImageUrl: currentFabricUrl,
@@ -373,7 +376,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
               });
             }
             
-            throw new Error('La génération est bloquée. Le serveur est surchargé, réessayez dans quelques minutes.');
+            console.error('❌ Échec même avec modèle alternatif, modèle utilisé:', currentModel);
+            throw new Error('Le service de génération est actuellement indisponible. Veuillez réessayer dans quelques minutes.');
           }
           // Afficher le temps d'attente si disponible
           if (pollData.queueTime && onProgress) {
