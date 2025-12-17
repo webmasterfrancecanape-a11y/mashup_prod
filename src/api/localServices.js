@@ -320,24 +320,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
             console.error('Erreur annulation:', err);
           }
           
-          // Si on utilise encore le modèle par défaut, essayer avec flux-dev
-          if (currentModel === 'google/nano-banana-pro') {
-            console.log('🔄 Basculement automatique vers flux-dev (queue longue)');
-            if (onProgress) {
-              onProgress('🔄 Basculement vers modèle alternatif (qualité optimale)...');
-            }
-            await sleep(2000);
-            // Récursion avec modèle alternatif
-            return await generateSofaWithFabric({
-              sofaImageUrl: currentSofaUrl,
-              fabricImageUrl: currentFabricUrl,
-              userDetails,
-              onProgress,
-              modelVersion: 'black-forest-labs/flux-dev'
-            });
-          }
-          
-          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Réessayez dans quelques minutes.`);
+          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Veuillez réessayer dans quelques minutes ou à une heure moins chargée.`);
         }
 
         if (pollData.status === 'succeeded') {
@@ -361,25 +344,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
               console.error('Erreur annulation:', err);
             }
             
-            // Si on utilise encore le modèle par défaut, essayer avec flux-dev
-            if (currentModel === 'google/nano-banana-pro') {
-              console.log('🔄 Basculement automatique vers flux-dev (meilleure qualité)');
-              if (onProgress) {
-                onProgress('⚠️ Modèle surchargé. Basculement vers modèle alternatif (qualité optimale)...');
-              }
-              // Attendre 2 secondes avant de relancer
-              await sleep(2000);
-              return await generateSofaWithFabric({
-                sofaImageUrl: currentSofaUrl,
-                fabricImageUrl: currentFabricUrl,
-                userDetails,
-                onProgress,
-                modelVersion: 'black-forest-labs/flux-dev'
-              });
-            }
-            
-            console.error('❌ Échec même avec modèle alternatif, modèle utilisé:', currentModel);
-            throw new Error('Le service de génération est actuellement indisponible. Veuillez réessayer dans quelques minutes.');
+            throw new Error('Le serveur IA est surchargé et ne répond pas. Veuillez réessayer dans quelques minutes ou à une heure de moindre affluence.');
           }
           // Afficher le temps d'attente si disponible
           if (pollData.queueTime && onProgress) {
