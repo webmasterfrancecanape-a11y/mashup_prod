@@ -15,7 +15,10 @@ export default async function handler(req, res) {
   const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
   try {
-    const { sofaImageUrl, fabricImageUrl, prompt, predictionId } = req.body;
+    const { sofaImageUrl, fabricImageUrl, prompt, predictionId, modelVersion } = req.body;
+    
+    // Modèle par défaut ou alternatif
+    const model = modelVersion || 'google/nano-banana-pro';
 
     // Si on a un predictionId, on vérifie le statut (polling)git
     if (predictionId) {
@@ -54,8 +57,39 @@ export default async function handler(req, res) {
     }
 
     // Sinon, on lance une nouvelle génération
+    // Configuration selon le modèle
+    let inputConfig;
+    
+    if (model === 'google/nano-banana-pro') {
+      inputConfig = {
+        prompt: prompt,
+        resolution: '1K',
+        image_input: [sofaImageUrl, fabricImageUrl],
+        aspect_ratio: '4:3',
+        output_format: 'jpg',
+        output_quality: 80,
+        safety_filter_level: 'block_only_high',
+      };
+    } else if (model === 'black-forest-labs/flux-schnell') {
+      // Flux Schnell : ultra rapide mais pas de multi-images natives
+      inputConfig = {
+        prompt: `${prompt}. Sofa with fabric pattern.`,
+        image: sofaImageUrl,
+        num_inference_steps: 4,
+        output_format: 'jpg',
+        output_quality: 80,
+      };
+    } else {
+      // Config générique pour autres modèles
+      inputConfig = {
+        prompt: prompt,
+        image: sofaImageUrl,
+        output_format: 'jpg',
+      };
+    }
+    
     const response = await fetch(
-      'https://api.replicate.com/v1/models/google/nano-banana-pro/predictions',
+      `https://api.replicate.com/v1/models/${model}/predictions`,
       {
         method: 'POST',
         headers: {
@@ -63,15 +97,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          input: {
-            prompt: prompt,
-            resolution: '1K',
-            image_input: [sofaImageUrl, fabricImageUrl],
-            aspect_ratio: '4:3',
-            output_format: 'jpg',
-            output_quality: 80,
-            safety_filter_level: 'block_only_high',
-          },
+          input: inputConfig,
         }),
       }
     );

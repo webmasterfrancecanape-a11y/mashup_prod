@@ -203,7 +203,7 @@ export function clearHistory() {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Génération d'image avec Replicate via API serverless (avec polling)
-export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, userDetails, onProgress }) {
+export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, userDetails, onProgress, modelVersion = null }) {
   let prompt = `A photorealistic sofa with the exact fabric pattern and texture from the reference image applied seamlessly to its upholstery. The sofa should maintain its original shape and lighting while the fabric covers all cushions and surfaces naturally. High quality, professional furniture photography.`;
 
   // Ajouter les détails utilisateur au prompt si fournis
@@ -217,6 +217,9 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
   let attempt = 0;
   const maxRetries = 2;
   
+  // Modèle à utiliser (par défaut: nano-banana-pro, fallback: flux-schnell)
+  const currentModel = modelVersion || 'google/nano-banana-pro';
+  
   // Configurations de compression progressive (taille max, qualité)
   const compressionLevels = [
     { maxWidth: 1280, quality: 0.80 }, // Déjà appliqué
@@ -226,11 +229,16 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
 
   while (attempt <= maxRetries) {
     try {
-      // 1. Lancer la génération
+      // 1. Lancer la génération avec le modèle spécifié
       const startResponse = await fetch('/api/replicate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sofaImageUrl: currentSofaUrl, fabricImageUrl: currentFabricUrl, prompt }),
+        body: JSON.stringify({ 
+          sofaImageUrl: currentSofaUrl, 
+          fabricImageUrl: currentFabricUrl, 
+          prompt,
+          modelVersion: currentModel 
+        }),
       });
 
       // Gestion de l'erreur 413 (Request Entity Too Large)
@@ -312,7 +320,22 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
             console.error('Erreur annulation:', err);
           }
           
-          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Réessayez dans quelques minutes ou changez d'heure.`);
+          // Si on utilise encore le modèle par défaut, essayer avec flux-schnell
+          if (currentModel === 'google/nano-banana-pro') {
+            if (onProgress) {
+              onProgress('🔄 Tentative avec modèle alternatif plus rapide...');
+            }
+            // Récursion avec modèle alternatif
+            return await generateSofaWithFabric({
+              sofaImageUrl: currentSofaUrl,
+              fabricImageUrl: currentFabricUrl,
+              userDetails,
+              onProgress,
+              modelVersion: 'black-forest-labs/flux-schnell'
+            });
+          }
+          
+          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Réessayez dans quelques minutes.`);
         }
 
         if (pollData.status === 'succeeded') {
