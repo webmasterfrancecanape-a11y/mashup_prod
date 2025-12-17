@@ -346,9 +346,34 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
           throw new Error('La génération a été annulée');
         } else if (pollData.status === 'starting') {
           consecutiveStarting++;
-          // Si bloqué en "starting" plus de 30 secondes, c'est probablement un problème
+          // Si bloqué en "starting" plus de 30 secondes, essayer le fallback
           if (consecutiveStarting > 20) {
-            throw new Error('La génération est bloquée. Veuillez réessayer.');
+            // Annuler la prédiction bloquée
+            try {
+              await fetch('/api/replicate-cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ predictionId }),
+              });
+            } catch (err) {
+              console.error('Erreur annulation:', err);
+            }
+            
+            // Si on utilise encore le modèle par défaut, essayer avec flux-schnell
+            if (currentModel === 'google/nano-banana-pro') {
+              if (onProgress) {
+                onProgress('⚠️ Modèle surchargé. Tentative avec modèle alternatif...');
+              }
+              return await generateSofaWithFabric({
+                sofaImageUrl: currentSofaUrl,
+                fabricImageUrl: currentFabricUrl,
+                userDetails,
+                onProgress,
+                modelVersion: 'black-forest-labs/flux-schnell'
+              });
+            }
+            
+            throw new Error('La génération est bloquée. Le serveur est surchargé, réessayez dans quelques minutes.');
           }
           // Afficher le temps d'attente si disponible
           if (pollData.queueTime && onProgress) {
