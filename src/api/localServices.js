@@ -320,7 +320,23 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
             console.error('Erreur annulation:', err);
           }
           
-          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Veuillez réessayer dans quelques minutes ou à une heure moins chargée.`);
+          // Si on utilise encore le modèle par défaut, basculer vers modèle rapide
+          if (currentModel === 'google/nano-banana-pro') {
+            console.log('🔄 Basculement automatique vers sdxl-lightning (queue longue)');
+            if (onProgress) {
+              onProgress('⚠️ Serveur surchargé. Basculement vers modèle alternatif rapide...');
+            }
+            await sleep(2000);
+            return await generateSofaWithFabric({
+              sofaImageUrl: currentSofaUrl,
+              fabricImageUrl: currentFabricUrl,
+              userDetails,
+              onProgress,
+              modelVersion: 'lucataco/sdxl-lightning-4step'
+            });
+          }
+          
+          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Veuillez réessayer dans quelques minutes.`);
         }
 
         if (pollData.status === 'succeeded') {
@@ -344,7 +360,23 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
               console.error('Erreur annulation:', err);
             }
             
-            throw new Error('Le serveur IA est surchargé et ne répond pas. Veuillez réessayer dans quelques minutes ou à une heure de moindre affluence.');
+            // Si nano-banana-pro bloqué, basculer vers modèle rapide
+            if (currentModel === 'google/nano-banana-pro') {
+              console.log('🔄 Basculement automatique vers sdxl-lightning (blocage starting)');
+              if (onProgress) {
+                onProgress('⚠️ Modèle bloqué. Basculement vers modèle alternatif rapide...');
+              }
+              await sleep(2000);
+              return await generateSofaWithFabric({
+                sofaImageUrl: currentSofaUrl,
+                fabricImageUrl: currentFabricUrl,
+                userDetails,
+                onProgress,
+                modelVersion: 'lucataco/sdxl-lightning-4step'
+              });
+            }
+            
+            throw new Error('Le serveur IA est surchargé. Veuillez réessayer dans quelques minutes.');
           }
           // Afficher le temps d'attente si disponible
           if (pollData.queueTime && onProgress) {

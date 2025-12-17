@@ -89,6 +89,16 @@ export default async function handler(req, res) {
         output_format: 'jpg',
         output_quality: 90,
       };
+    } else if (model === 'lucataco/sdxl-lightning-4step') {
+      // SDXL Lightning : très rapide avec bonne qualité
+      inputConfig = {
+        prompt: `${prompt}. High quality, detailed, professional photography.`,
+        image: sofaImageUrl,
+        num_inference_steps: 4,
+        guidance_scale: 0,
+        output_format: 'jpg',
+        output_quality: 90,
+      };
     } else {
       // Config générique pour autres modèles
       inputConfig = {
