@@ -120,6 +120,12 @@ export default function MashupGenerator() {
   };
 
   const handleGenerateMashup = async () => {
+    // Protection contre les clics multiples
+    if (isGenerating) {
+      console.log('⚠️ Génération déjà en cours, clic ignoré');
+      return;
+    }
+
     if (!tissuImage || !canapeImage) {
       setError("Veuillez sélectionner une photo de tissu et une photo de canapé");
       return;
