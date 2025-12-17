@@ -71,13 +71,23 @@ export default async function handler(req, res) {
         safety_filter_level: 'block_only_high',
       };
     } else if (model === 'black-forest-labs/flux-schnell') {
-      // Flux Schnell : ultra rapide mais pas de multi-images natives
+      // Flux Schnell : ultra rapide mais qualité moyenne
       inputConfig = {
         prompt: `${prompt}. Sofa with fabric pattern.`,
         image: sofaImageUrl,
         num_inference_steps: 4,
         output_format: 'jpg',
         output_quality: 80,
+      };
+    } else if (model === 'black-forest-labs/flux-dev') {
+      // Flux Dev : meilleur compromis qualité/vitesse
+      inputConfig = {
+        prompt: `${prompt}. Professional furniture photography.`,
+        image: sofaImageUrl,
+        num_inference_steps: 28,
+        guidance: 3.5,
+        output_format: 'jpg',
+        output_quality: 90,
       };
     } else {
       // Config générique pour autres modèles

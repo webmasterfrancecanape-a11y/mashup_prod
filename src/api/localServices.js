@@ -303,8 +303,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
 
         const pollData = await pollResponse.json();
 
-        // Détecter les longues files d'attente (plus de 60 secondes)
-        if (pollData.queueTime && pollData.queueTime > 60) {
+        // Détecter les longues files d'attente (plus de 2 minutes)
+        if (pollData.queueTime && pollData.queueTime > 120) {
           if (onProgress) {
             onProgress(`⚠️ File d'attente trop longue (${Math.floor(pollData.queueTime)}s). Annulation...`);
           }
@@ -320,18 +320,20 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
             console.error('Erreur annulation:', err);
           }
           
-          // Si on utilise encore le modèle par défaut, essayer avec flux-schnell
+          // Si on utilise encore le modèle par défaut, essayer avec flux-dev
           if (currentModel === 'google/nano-banana-pro') {
+            console.log('🔄 Basculement automatique vers flux-dev (queue longue)');
             if (onProgress) {
-              onProgress('🔄 Tentative avec modèle alternatif plus rapide...');
+              onProgress('🔄 Basculement vers modèle alternatif (qualité optimale)...');
             }
+            await sleep(2000);
             // Récursion avec modèle alternatif
             return await generateSofaWithFabric({
               sofaImageUrl: currentSofaUrl,
               fabricImageUrl: currentFabricUrl,
               userDetails,
               onProgress,
-              modelVersion: 'black-forest-labs/flux-schnell'
+              modelVersion: 'black-forest-labs/flux-dev'
             });
           }
           
@@ -346,8 +348,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
           throw new Error('La génération a été annulée');
         } else if (pollData.status === 'starting') {
           consecutiveStarting++;
-          // Si bloqué en "starting" plus de 30 secondes, essayer le fallback
-          if (consecutiveStarting > 20) {
+          // Si bloqué en "starting" plus de 50 secondes, essayer le fallback
+          if (consecutiveStarting > 40) {
             // Annuler la prédiction bloquée
             try {
               await fetch('/api/replicate-cancel', {
@@ -359,11 +361,11 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
               console.error('Erreur annulation:', err);
             }
             
-            // Si on utilise encore le modèle par défaut, essayer avec flux-schnell
+            // Si on utilise encore le modèle par défaut, essayer avec flux-dev
             if (currentModel === 'google/nano-banana-pro') {
-              console.log('🔄 Basculement automatique vers flux-schnell');
+              console.log('🔄 Basculement automatique vers flux-dev (meilleure qualité)');
               if (onProgress) {
-                onProgress('⚠️ Modèle surchargé. Basculement automatique vers modèle rapide...');
+                onProgress('⚠️ Modèle surchargé. Basculement vers modèle alternatif (qualité optimale)...');
               }
               // Attendre 2 secondes avant de relancer
               await sleep(2000);
@@ -372,7 +374,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
                 fabricImageUrl: currentFabricUrl,
                 userDetails,
                 onProgress,
-                modelVersion: 'black-forest-labs/flux-schnell'
+                modelVersion: 'black-forest-labs/flux-dev'
               });
             }
             
