@@ -30,14 +30,26 @@ export default async function handler(req, res) {
 
       const statusData = await statusResponse.json();
 
+      // Calculer le temps en queue si disponible
+      const metrics = statusData.metrics || {};
+      const queueTime = metrics.predict_time ? 0 : (Date.now() - new Date(statusData.created_at).getTime()) / 1000;
+      
       if (statusData.status === 'succeeded') {
         const imageUrl = Array.isArray(statusData.output) ? statusData.output[0] : statusData.output;
         return res.status(200).json({ status: 'succeeded', imageUrl });
       } else if (statusData.status === 'failed') {
         return res.status(500).json({ status: 'failed', message: statusData.error || 'Generation failed' });
+      } else if (statusData.status === 'canceled') {
+        return res.status(200).json({ status: 'canceled', message: 'Prediction was canceled' });
       } else {
         // Encore en cours (starting, processing)
-        return res.status(200).json({ status: statusData.status, predictionId });
+        // Retourner les métriques pour que le client puisse détecter les longues queues
+        return res.status(200).json({ 
+          status: statusData.status, 
+          predictionId,
+          queueTime: Math.floor(queueTime),
+          metrics: metrics
+        });
       }
     }
 

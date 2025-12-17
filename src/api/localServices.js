@@ -295,6 +295,26 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
 
         const pollData = await pollResponse.json();
 
+        // Détecter les longues files d'attente (plus de 60 secondes)
+        if (pollData.queueTime && pollData.queueTime > 60) {
+          if (onProgress) {
+            onProgress(`⚠️ File d'attente trop longue (${Math.floor(pollData.queueTime)}s). Annulation...`);
+          }
+          
+          // Annuler la prédiction via l'endpoint backend
+          try {
+            await fetch('/api/replicate-cancel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ predictionId }),
+            });
+          } catch (err) {
+            console.error('Erreur annulation:', err);
+          }
+          
+          throw new Error(`Le serveur IA est surchargé (attente: ${Math.floor(pollData.queueTime / 60)} min). Réessayez dans quelques minutes ou changez d'heure.`);
+        }
+
         if (pollData.status === 'succeeded') {
           return { status: 'success', imageUrl: pollData.imageUrl };
         } else if (pollData.status === 'failed') {
@@ -306,6 +326,10 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
           // Si bloqué en "starting" plus de 30 secondes, c'est probablement un problème
           if (consecutiveStarting > 20) {
             throw new Error('La génération est bloquée. Veuillez réessayer.');
+          }
+          // Afficher le temps d'attente si disponible
+          if (pollData.queueTime && onProgress) {
+            onProgress(`⏳ En attente (${Math.floor(pollData.queueTime)}s)...`);
           }
         } else {
           // processing ou autre état
