@@ -277,7 +277,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
       }
 
       // 2. Polling adaptatif : rapide au début, puis ralentit
-      const maxAttempts = 90; // 90 tentatives max (~120 secondes)
+      const maxAttempts = 120; // 120 tentatives max (~3 minutes)
       let consecutiveStarting = 0;
       
       for (let i = 0; i < maxAttempts; i++) {
@@ -303,8 +303,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
 
         const pollData = await pollResponse.json();
 
-        // Détecter les longues files d'attente (plus de 2 minutes)
-        if (pollData.queueTime && pollData.queueTime > 120) {
+        // Détecter les longues files d'attente (plus de 3 minutes)
+        if (pollData.queueTime && pollData.queueTime > 180) {
           if (onProgress) {
             onProgress(`⚠️ File d'attente trop longue (${Math.floor(pollData.queueTime)}s). Annulation...`);
           }
@@ -331,8 +331,8 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
           throw new Error('La génération a été annulée');
         } else if (pollData.status === 'starting') {
           consecutiveStarting++;
-          // Si bloqué en "starting" plus de 50 secondes, essayer le fallback
-          if (consecutiveStarting > 40) {
+          // Si bloqué en "starting" plus de 70-90 secondes
+          if (consecutiveStarting > 60) {
             // Annuler la prédiction bloquée
             try {
               await fetch('/api/replicate-cancel', {
