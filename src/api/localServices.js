@@ -269,7 +269,9 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
       }
 
       // 2. Polling adaptatif : rapide au début, puis ralentit
-      const maxAttempts = 60; // 60 tentatives max
+      const maxAttempts = 90; // 90 tentatives max (~120 secondes)
+      let consecutiveStarting = 0;
+      
       for (let i = 0; i < maxAttempts; i++) {
         // Polling adaptatif : 1s les 10 premières tentatives, puis 2s
         const pollInterval = i < 10 ? 1000 : 2000;
@@ -297,18 +299,39 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
           return { status: 'success', imageUrl: pollData.imageUrl };
         } else if (pollData.status === 'failed') {
           throw new Error(pollData.message || 'La génération a échoué');
+        } else if (pollData.status === 'canceled') {
+          throw new Error('La génération a été annulée');
+        } else if (pollData.status === 'starting') {
+          consecutiveStarting++;
+          // Si bloqué en "starting" plus de 30 secondes, c'est probablement un problème
+          if (consecutiveStarting > 20) {
+            throw new Error('La génération est bloquée. Veuillez réessayer.');
+          }
+        } else {
+          // processing ou autre état
+          consecutiveStarting = 0;
         }
-        // Sinon continue le polling (starting, processing)
+        // Continue le polling
       }
 
-      throw new Error('Timeout: la génération a pris trop de temps');
+      // Si on arrive ici, c'est un timeout
+      throw new Error('Timeout: la génération a pris trop de temps (max 120s)');
       
     } catch (error) {
-      // Si ce n'est pas une erreur 413, on la propage directement
-      if (error.message && !error.message.includes('volumineuses')) {
-        throw error;
+      // Si erreur 413, on continue la boucle pour réessayer avec compression
+      if (error.message && error.message.includes('413')) {
+        attempt++;
+        if (attempt > maxRetries) {
+          throw new Error('Les images sont trop volumineuses même après compression maximale');
+        }
+        continue;
       }
-      // Sinon on continue la boucle pour réessayer
+      
+      // Toute autre erreur est fatale
+      throw error;
     }
   }
+  
+  // Si on sort de la boucle sans succès
+  throw new Error('Échec de la génération après plusieurs tentatives');
 }
