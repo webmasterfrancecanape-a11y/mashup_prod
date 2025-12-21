@@ -242,16 +242,68 @@ export default function MashupGenerator() {
           img.height - bannerHeight / 2
         );
         
-        // Télécharger l'image avec le bandeau
+        // Convertir en blob et télécharger
         canvas.toBlob((newBlob) => {
           const url = window.URL.createObjectURL(newBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `canape-mashup-${Date.now()}.png`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
+          
+          // Détecter iOS/iPad
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          
+          if (isIOS) {
+            // Sur iOS/iPad : ouvrir dans un nouvel onglet pour permettre l'enregistrement manuel
+            // L'utilisateur peut ensuite appuyer longuement sur l'image pour "Enregistrer dans Photos"
+            const newTab = window.open();
+            if (newTab) {
+              newTab.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <meta name="viewport" content="width=device-width, initial-scale=1">
+                  <title>Enregistrer l'image</title>
+                  <style>
+                    body { 
+                      margin: 0; 
+                      padding: 20px; 
+                      background: #f5f5f5; 
+                      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                      text-align: center;
+                    }
+                    .instructions {
+                      background: #fff;
+                      padding: 16px;
+                      border-radius: 12px;
+                      margin-bottom: 20px;
+                      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    }
+                    img { 
+                      max-width: 100%; 
+                      border-radius: 12px;
+                      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="instructions">
+                    <p><strong>📱 Pour enregistrer dans Photos :</strong></p>
+                    <p>Appuyez longuement sur l'image ci-dessous, puis sélectionnez "Enregistrer dans Photos"</p>
+                  </div>
+                  <img src="${url}" alt="Canapé généré" />
+                </body>
+                </html>
+              `);
+              newTab.document.close();
+            }
+          } else {
+            // Sur desktop : téléchargement classique
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `canape-mashup-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          }
         }, 'image/png');
       };
       

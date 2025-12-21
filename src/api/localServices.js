@@ -217,7 +217,7 @@ export async function generateSofaWithFabric({ sofaImageUrl, fabricImageUrl, use
   let attempt = 0;
   const maxRetries = 2;
   
-  // Modèle à utiliser (par défaut: nano-banana-pro, fallback: flux-schnell)
+  // Modèle à utiliser (par défaut: nano-banana-pro, fallback: sdxl-lightning)
   const currentModel = modelVersion || 'google/nano-banana-pro';
   
   // Configurations de compression progressive (taille max, qualité)
