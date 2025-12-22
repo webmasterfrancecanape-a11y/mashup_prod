@@ -667,28 +667,30 @@ export default function MashupGenerator() {
 
         {generatedImage && (
           <Card className="bg-white/80 backdrop-blur shadow-2xl border-2 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
+            <CardContent className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-green-600" />
                   </div>
                   <h2 className="text-xl font-bold text-gray-900">Résultat</h2>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleDownload()}
-                    variant="outline"
-                    className="border-2 border-green-200 hover:bg-green-50"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Télécharger
-                  </Button>
+                <div className="flex gap-2 flex-wrap">
+                  {!canShare && (
+                    <Button
+                      onClick={() => handleDownload()}
+                      variant="outline"
+                      className="border-2 border-green-200 hover:bg-green-50 flex-1 sm:flex-none"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Télécharger
+                    </Button>
+                  )}
                   {canShare && (
                     <Button
                       onClick={() => handleShare()}
                       variant="outline"
-                      className="border-2 border-blue-200 hover:bg-blue-50"
+                      className="border-2 border-blue-200 hover:bg-blue-50 flex-1 sm:flex-none"
                     >
                       <Share2 className="w-4 h-4 mr-2" />
                       Partager
@@ -697,7 +699,7 @@ export default function MashupGenerator() {
                   <Button
                     onClick={handleReset}
                     variant="outline"
-                    className="border-2 border-gray-200 hover:bg-gray-50"
+                    className="border-2 border-gray-200 hover:bg-gray-50 flex-1 sm:flex-none"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Nouveau
@@ -720,7 +722,7 @@ export default function MashupGenerator() {
                 </div>
               </div>
 
-              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="mt-4 md:mt-6 p-3 md:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                 <p className="text-sm text-gray-600 text-center">
                   ✨ Votre canapé personnalisé est prêt !
                 </p>
