@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory, deleteCloudinaryImage } from "@/api/localServices"; import { Button } from "@/components/ui/button";
+import { uploadFile, generateSofaWithFabric, uploadFromUrl, addToHistory, getHistory, deleteCloudinaryImage } from "@/api/localServices";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X } from "lucide-react";
+import { Camera, Upload, Wand2, Download, RefreshCw, Sparkles, Loader2, AlertCircle, History, Trash2, X, Share2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import heic2any from "heic2any";
 
@@ -19,12 +20,29 @@ export default function MashupGenerator() {
   const [userDetails, setUserDetails] = useState("");
   const [history, setHistory] = useState([]);
   const [cloudinaryUrl, setCloudinaryUrl] = useState(null);
+  const [canShare, setCanShare] = useState(false);
 
   const tissuCameraRef = useRef(null);
 
   // Charger l'historique au démarrage
   useEffect(() => {
     setHistory(getHistory());
+  }, []);
+
+  // Vérifier si l'API Web Share est disponible (iOS/iPad)
+  useEffect(() => {
+    const checkShareCapability = async () => {
+      try {
+        if (navigator.share && navigator.canShare) {
+          const testFile = new File(['test'], 'test.png', { type: 'image/png' });
+          const canShareFiles = navigator.canShare({ files: [testFile] });
+          setCanShare(canShareFiles);
+        }
+      } catch {
+        setCanShare(false);
+      }
+    };
+    checkShareCapability();
   }, []);
   const tissuGalleryRef = useRef(null);
   const canapeCameraRef = useRef(null);
@@ -325,6 +343,69 @@ export default function MashupGenerator() {
     setCloudinaryUrl(null);
   };
 
+  const handleShare = async (imageUrl = null) => {
+    const urlToShare = imageUrl || cloudinaryUrl || generatedImage;
+    if (!urlToShare) return;
+
+    try {
+      const response = await fetch(urlToShare);
+      const blob = await response.blob();
+      
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      img.onload = async () => {
+        // Créer un canvas avec les dimensions de l'image
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        
+        // Dessiner l'image originale
+        ctx.drawImage(img, 0, 0);
+        
+        // Ajouter le bandeau disclaimer en bas
+        const bannerHeight = Math.max(40, img.height * 0.05);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, img.height - bannerHeight, img.width, bannerHeight);
+        
+        // Ajouter le texte
+        const fontSize = Math.max(14, img.width * 0.018);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `${fontSize}px Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(
+          '⚠️ Aperçu indicatif généré par IA — Les couleurs et textures réelles peuvent varier',
+          img.width / 2,
+          img.height - bannerHeight / 2
+        );
+        
+        // Convertir en blob pour le partage
+        canvas.toBlob(async (newBlob) => {
+          try {
+            const file = new File([newBlob], `canape-mashup-${Date.now()}.png`, { type: 'image/png' });
+            
+            await navigator.share({
+              files: [file],
+              title: 'Mon canapé personnalisé',
+              text: 'Découvrez mon canapé avec ce tissu ! Créé avec France Canapé'
+            });
+          } catch (shareErr) {
+            // L'utilisateur a annulé ou erreur de partage
+            if (shareErr.name !== 'AbortError') {
+              console.error("Erreur de partage:", shareErr);
+            }
+          }
+        }, 'image/png');
+      };
+      
+      img.src = URL.createObjectURL(blob);
+    } catch (err) {
+      console.error("Erreur de préparation du partage:", err);
+    }
+  };
+
   const handleSelectFromHistory = (item) => {
     setGeneratedImage(item.imageUrl);
     setCloudinaryUrl(item.imageUrl);
@@ -596,13 +677,23 @@ export default function MashupGenerator() {
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    onClick={handleDownload}
+                    onClick={() => handleDownload()}
                     variant="outline"
                     className="border-2 border-green-200 hover:bg-green-50"
                   >
                     <Download className="w-4 h-4 mr-2" />
                     Télécharger
                   </Button>
+                  {canShare && (
+                    <Button
+                      onClick={() => handleShare()}
+                      variant="outline"
+                      className="border-2 border-blue-200 hover:bg-blue-50"
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Partager
+                    </Button>
+                  )}
                   <Button
                     onClick={handleReset}
                     variant="outline"
